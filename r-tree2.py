@@ -27,6 +27,7 @@ class RTree:
                 data = f"Point({x1},{y1}) - ({x2},{y2})"
                 bounding_box = (min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
                 self.insert(data, bounding_box)
+            print(data_size)
 
     def insert(self, data, bounding_box):
         entry = (data, bounding_box)
@@ -181,60 +182,41 @@ class RTree:
             top = max(bb[1], min(point[1], bb[3]))
             return ((point[0] - left) ** 2 + (point[1] - top) ** 2) ** 0.5
 
-    def evaluate_search_speed(self, dataset_sizes):
-        search_times = []
-
-        for dataset_size in dataset_sizes:
-            # 3. 랜덤한 쿼리 포인트 생성
-            query_point = (random.randint(0, 10000), random.randint(0, 10000))
-
-            start_time = time.time()
-            result = self.search(query_point)
-            end_time = time.time()
-
-            search_time = end_time - start_time
-            search_times.append(search_time)
-
-        return search_times
-
 
 if __name__ == '__main__':
-    rtree = RTree(max_entries=10000)
+    dataset_sizes = [10000, 20000, 30000, 40000, 50000]
+    max_entries_per_dataset = [10000, 20000, 30000, 40000, 50000]
 
-    dataset_sizes = [10000, 20000, 30000, 40000, 50000]  # 데이터셋 크기를 변경
-    query_point_count = 100  # 100개의 랜덤 쿼리 포인트 생성
+    search_times = [0] * len(dataset_sizes)
+    query_point_count = 100
 
-    search_times = []  # 검색 시간을 저장할 리스트
-
-    for dataset_size in dataset_sizes:
-        # 1. 데이터셋 추가
+    for i, dataset_size in enumerate(dataset_sizes):
+        rtree = RTree(max_entries=max_entries_per_dataset[i])
         rtree.add_dataset([dataset_size])
 
-        # 3. R트리 검색을 위해 랜덤한 쿼리 포인트 100개 생성
         query_points = [(random.randint(0, 10000), random.randint(0, 10000)) for _ in range(query_point_count)]
 
-        # 3. R트리 검색
         results = rtree.search(query_points)
 
         start_time = time.time()
-        for i, query_point in enumerate(query_points):
-            result = results[i]
+        for j, query_point in enumerate(query_points):
+            result = results[j]
             if result:
-                print(f"Query Point {i + 1}: Nearest neighbor to {query_point} is {result[0]} within the bounding box {result[1]}.")
+                print(f"Query Point {j + 1}: Nearest neighbor to {query_point} is {result[0]} within the bounding box {result[1]}.")
             else:
-                print(f"Query Point {i + 1}: No nearest neighbor found for {query_point}.")
+                print(f"Query Point {j + 1}: No nearest neighbor found for {query_point}.")
         end_time = time.time()
 
         search_time = end_time - start_time
-        search_times.append(search_time)
+        search_times[i] = search_time
 
-    for i, dataset_size in enumerate(dataset_sizes):
-        print(f"Dataset Size: {dataset_size}, Average Search Time: {search_times[i]} seconds")
+        print(f"Dataset Size: {dataset_size}, max_entries: {max_entries_per_dataset[i]}, Average Search Time: {search_times[i]} seconds")
 
     # 그래프 그리기
     plt.plot(dataset_sizes, search_times, marker='o', linestyle='-')
     plt.title('R-Tree Search Speed vs. Dataset Size')
     plt.xlabel('Dataset Size')
+    plt.xticks(dataset_sizes, [f'{size}' for size in dataset_sizes])
     plt.ylabel('Search Time (seconds)')
     plt.grid()
     plt.show()
